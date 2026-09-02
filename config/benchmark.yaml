@@ -1,0 +1,289 @@
+# Banco di prova: coppie malattia-farmaco con esito noto.
+#
+# A COSA SERVE
+# Con due soli casi pilota non si puo' calibrare un peso, non si puo' misurare
+# se una modifica migliora o peggiora, non si puo' dire nulla di quantitativo.
+# Ogni scelta fatta finora sui pesi dello scoring e' argomentata ma NON validata.
+# Questo file e' il minimo indispensabile per poterlo diventare.
+#
+# COME E' STATO COSTRUITO
+# Nessuna voce e' stata scritta a memoria. Ogni coppia e' stata verificata
+# contro i dati locali prima di essere ammessa:
+#   - la malattia risolve davvero in Mondo, con la stringa qui riportata
+#   - Orphanet le attribuisce geni causali
+#   - il farmaco esiste in DGIdb, con i bersagli indicati
+#   - PubMed riporta letteratura sulla coppia, e i PMID qui sotto sono quelli
+#     realmente restituiti dall'interrogazione, non citazioni ricordate
+#
+# Le coppie che non hanno superato la verifica sono elencate in fondo, con il
+# motivo. Sono informative quanto quelle incluse.
+#
+# COSA I PMID DIMOSTRANO E COSA NO
+# Dimostrano che l'accostamento e' discusso in letteratura. NON dimostrano che
+# il farmaco sia approvato per quella malattia, ne' che funzioni. La colonna
+# `kind` e' un'annotazione umana e, come tutte le annotazioni umane di questo
+# progetto, va trattata come tale: rivedibile, e da correggere se sbagliata.
+#
+# COME SI LEGGE `kind`
+#   repurposing      il farmaco nasce per altro ed e' arrivato qui dopo
+#   on_label         il farmaco e' stato sviluppato per questa malattia; serve
+#                    a verificare il ramo meccanicistico, non il riposizionamento
+#   structural_miss  il metodo NON puo' trovarlo, per costruzione. Un banco di
+#                    prova senza casi che devono fallire premia la promiscuita':
+#                    si alzerebbe la copertura rendendo lo strumento inutile.
+
+version: 1
+
+cases:
+
+  # ---------------------------------------------------------------- mTOR
+  - id: tsc-sirolimus
+    disease: "tuberous sclerosis"
+    expected_drug: "sirolimus"
+    expected_target: MTOR
+    kind: repurposing
+    note: >
+      Immunosoppressore nato per la profilassi del rigetto nel trapianto renale.
+      TSC1/TSC2 sono regolatori negativi di mTORC1: la loro perdita di funzione
+      produce iperattivazione, e un inibitore di MTOR e' direzionalmente coerente.
+      E' il caso su cui la pipeline e' stata costruita, quindi il piu' favorevole.
+    pubmed_count: 314
+    sources: [PMID:35963265, PMID:39726432, PMID:32279296]
+
+  - id: tsc-everolimus
+    disease: "tuberous sclerosis"
+    expected_drug: "everolimus"
+    expected_target: MTOR
+    kind: repurposing
+    pubmed_count: 498
+    sources: [PMID:36806388, PMID:35963265, PMID:38042867]
+
+  - id: lam-sirolimus
+    disease: "lymphangioleiomyomatosis"
+    expected_drug: "sirolimus"
+    expected_target: MTOR
+    kind: repurposing
+    note: >
+      Stessa asse mTOR della sclerosi tuberosa, ma malattia distinta. Serve a
+      verificare che il risultato non dipenda dalla singola etichetta usata.
+    pubmed_count: 258
+    sources: [PMID:36642366, PMID:32279296, PMID:40098835]
+
+  # ---------------------------------------------------------------- sfingolipidi
+  - id: npc-miglustat
+    disease: "Niemann-Pick disease type C"
+    expected_drug: "miglustat"
+    expected_target: UGCG
+    kind: repurposing
+    note: >
+      Il caso che il ramo meccanicistico non puo' vedere: NPC1 e UGCG non
+      condividono alcun pathway Reactome, a nessuna dimensione. Raggiungibile
+      solo per ponte fenotipico. E' il controllo piu' severo del banco.
+    pubmed_count: 123
+    sources: [PMID:20525256, PMID:34418116, PMID:40701909]
+
+  - id: gaucher-miglustat
+    disease: "Gaucher disease"
+    expected_drug: "miglustat"
+    expected_target: UGCG
+    kind: on_label
+    pubmed_count: 91
+    sources: [PMID:28218669, PMID:20301446, PMID:17996473]
+
+  - id: gaucher-eliglustat
+    disease: "Gaucher disease"
+    expected_drug: "eliglustat"
+    expected_target: UGCG
+    kind: on_label
+    pubmed_count: 109
+    sources: [PMID:28218669, PMID:37722956, PMID:20301446]
+
+  # ---------------------------------------------------------------- riposizionamenti classici
+  - id: progeria-lonafarnib
+    disease: "Hutchinson-Gilford progeria syndrome"
+    expected_drug: "lonafarnib"
+    expected_target: FNTB
+    kind: repurposing
+    note: >
+      Inibitore della farnesiltransferasi sviluppato in oncologia. Il gene
+      causale e' LMNA, il bersaglio e' un altro: il collegamento passa per la
+      farnesilazione della prelamina A.
+    pubmed_count: 46
+    sources: [PMID:20301300, PMID:36930696, PMID:36196312]
+
+  - id: alkaptonuria-nitisinone
+    disease: "alkaptonuria"
+    expected_drug: "nitisinone"
+    expected_target: HPD
+    kind: repurposing
+    note: >
+      Sviluppato per la tirosinemia di tipo 1 e riposizionato sull'alcaptonuria.
+      Gene causale HGD, bersaglio HPD: due enzimi diversi della stessa via di
+      degradazione della tirosina. E' il tipo di collegamento che il ramo
+      meccanicistico dovrebbe cogliere bene.
+    pubmed_count: 132
+    sources: [PMID:36167967, PMID:32083330, PMID:20301627]
+
+  - id: sca-hydroxyurea
+    disease: "sickle cell anemia"
+    expected_drug: "hydroxyurea"
+    expected_target: RRM1
+    kind: repurposing
+    note: >
+      Antineoplastico riposizionato sull'anemia falciforme per induzione
+      dell'emoglobina fetale. Il bersaglio in DGIdb (ribonucleotide reduttasi)
+      non ha relazione diretta con HBB: il meccanismo terapeutico passa per la
+      regolazione dell'espressione genica, che questo metodo non modella.
+      Caso difficile e utile proprio per questo.
+    pubmed_count: 807
+    sources: [PMID:35319686, PMID:39135533, PMID:36928875]
+
+  - id: pah-sildenafil
+    disease: "pulmonary arterial hypertension"
+    expected_drug: "sildenafil"
+    expected_target: PDE5A
+    kind: repurposing
+    note: >
+      Nato per l'angina, poi disfunzione erettile, poi ipertensione arteriosa
+      polmonare. Fra i geni causali c'e' BMPR2.
+    pubmed_count: 907
+    sources: [PMID:33226665, PMID:39206778, PMID:35413880]
+
+  - id: marfan-losartan
+    disease: "Marfan syndrome"
+    expected_drug: "losartan"
+    expected_target: AGTR1
+    kind: repurposing
+    note: >
+      Antipertensivo studiato nella sindrome di Marfan per l'antagonismo su
+      TGF-beta. In DGIdb compare come LOSARTAN POTASSIUM: il confronto deve
+      tollerare le forme saline, altrimenti misura la cosa sbagliata.
+    pubmed_count: 115
+    sources: [PMID:34807420, PMID:37022786, PMID:30261964]
+
+  - id: fop-palovarotene
+    disease: "fibrodysplasia ossificans progressiva"
+    expected_drug: "palovarotene"
+    expected_target: RARG
+    kind: repurposing
+    pubmed_count: 37
+    sources: [PMID:39834193, PMID:32525643, PMID:37957586]
+
+  # ---------------------------------------------------------------- controlli sul ramo meccanicistico
+  - id: cf-ivacaftor
+    disease: "cystic fibrosis"
+    expected_drug: "ivacaftor"
+    expected_target: CFTR
+    kind: on_label
+    note: >
+      Agisce direttamente sul gene causale: verifica il caso a distanza zero.
+      Non e' un riposizionamento e non va contato come tale.
+    pubmed_count: 1987
+    sources: [PMID:34784492, PMID:35927224, PMID:35681464]
+
+  - id: fabry-migalastat
+    disease: "Fabry disease"
+    expected_drug: "migalastat"
+    expected_target: GLA
+    kind: on_label
+    pubmed_count: 153
+    sources: [PMID:35652398, PMID:40310476, PMID:33172708]
+
+  - id: tyrosinemia-nitisinone
+    disease: "tyrosinemia type 1"
+    expected_drug: "nitisinone"
+    expected_target: HPD
+    kind: on_label
+    pubmed_count: 89
+    sources: [PMID:31643958, PMID:30942987, PMID:36943996]
+
+  - id: aip-givosiran
+    disease: "acute intermittent porphyria"
+    expected_drug: "givosiran"
+    expected_target: HMBS
+    kind: on_label
+    pubmed_count: 58
+    sources: [PMID:32521132, PMID:20301372, PMID:34145602]
+
+  - id: fh-evolocumab
+    disease: "familial hypercholesterolemia"
+    expected_drug: "evolocumab"
+    expected_target: PCSK9
+    kind: on_label
+    pubmed_count: 275
+    sources: [PMID:39751968, PMID:32865373, PMID:39870096]
+
+  - id: sma-risdiplam
+    disease: "spinal muscular atrophy, type 1"
+    expected_drug: "risdiplam"
+    expected_target: SMN2
+    kind: on_label
+    note: >
+      Si usa il sottotipo e non il termine padre: `spinal muscular atrophy`
+      aggrega 34 geni causali di sottotipi diversi, e interrogarlo misurerebbe
+      la capacita' di digerire un termine troppo ampio, non il metodo.
+    pubmed_count: 358
+    sources: [PMID:37569314, PMID:38267192, PMID:40802943]
+
+  - id: hpp-asfotase
+    disease: "hypophosphatasia"
+    expected_drug: "asfotase alfa"
+    expected_target: ALPL
+    kind: on_label
+    pubmed_count: 198
+    sources: [PMID:30558909, PMID:40715944, PMID:37993691]
+
+  - id: attr-tafamidis
+    disease: "ATTRV30M amyloidosis"
+    expected_drug: "tafamidis"
+    expected_target: TTR
+    kind: on_label
+    pubmed_count: 2
+    sources: [PMID:29993288, PMID:30675806]
+
+  - id: cystinosis-cysteamine
+    disease: "cystinosis"
+    expected_drug: "cysteamine"
+    expected_target: null
+    kind: on_label
+    note: >
+      In DGIdb compare come CYSTEAMINE HYDROCHLORIDE. Altro caso in cui il
+      confronto deve tollerare la forma salina.
+    pubmed_count: 483
+    sources: [PMID:40912033, PMID:36977426, PMID:7494397]
+
+  # ---------------------------------------------------------------- fallimenti attesi
+  - id: wilson-trientine
+    disease: "Wilson disease"
+    expected_drug: "trientine"
+    expected_target: null
+    kind: structural_miss
+    note: >
+      Chelante del rame. Non ha un bersaglio proteico: in DGIdb l'unica riga
+      associata riporta gene NULL. Nessun metodo basato su pathway condivisi fra
+      gene causale e bersaglio del farmaco puo' trovarlo, per costruzione.
+      E' incluso apposta: un banco di prova in cui tutto e' trovabile premia la
+      promiscuita', e alzare la copertura rendendo lo strumento indiscriminato
+      sarebbe un peggioramento travestito da miglioramento.
+    pubmed_count: 121
+    sources: [PMID:28723019, PMID:20301685, PMID:31644190]
+
+# --- Coppie escluse dopo la verifica, con il motivo -------------------------
+# Elencarle serve a chi vorra' ampliare il banco: sono errori gia' commessi.
+excluded:
+  - pair: "hereditary transthyretin amyloidosis / tafamidis"
+    reason: >
+      La stringa non risolve nel subset mondo-rare. La malattia c'e', ma sotto
+      il nome `ATTRV30M amyloidosis`: inclusa con quell'etichetta.
+  - pair: "beta-thalassemia / luspatercept"
+    reason: "Il nome della malattia e' ambiguo in Mondo e luspatercept non e' in DGIdb."
+  - pair: "familial hypercholesterolemia / lomitapide"
+    reason: >
+      In DGIdb come LOMITAPIDE MESYLATE, ma senza un bersaglio genico
+      utilizzabile dalla pipeline.
+  - pair: "Duchenne muscular dystrophy / ataluren"
+    reason: >
+      I bersagli in DGIdb sono proteine ribosomiali (RPS4X, RPL27A e simili),
+      coerenti con il meccanismo di readthrough ma non collegabili a DMD per
+      appartenenza a un pathway. Sarebbe un secondo `structural_miss`: escluso
+      per non sbilanciare il banco verso i fallimenti attesi.

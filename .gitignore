@@ -1,0 +1,31 @@
+# Dati: MAI committati. Ogni fonte ha la sua licenza, il repo distribuisce
+# solo il codice ETL che le scarica in locale. Vedi DATA_SOURCES.md.
+data/raw/
+data/processed/
+*.duckdb
+*.duckdb.wal
+
+# Report generati
+out/
+*.report.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+COMMIT_MSG.txt

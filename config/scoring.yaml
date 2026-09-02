@@ -1,0 +1,125 @@
+# Pesi e soglie dello scoring. Deterministico e ispezionabile: nessun modello
+# appreso, nessun parametro nascosto nel codice. Modificare qui cambia il
+# ranking, e il report mostra sempre il contributo di ogni componente.
+
+# --- Filtri hard: un candidato che non li supera viene scartato, non penalizzato ---
+filters:
+  # Solo farmaci con approvazione regolatoria secondo DGIdb (colonna 'approved').
+  require_approved: true
+  # Pathway con troppi geni non sono informativi: "Metabolism" contiene migliaia
+  # di geni e collegherebbe qualunque cosa a qualunque altra cosa. Questa soglia
+  # e' la singola difesa piu' importante contro il falso positivo per costruzione.
+  max_pathway_size: 200
+  # Distanza massima nella gerarchia dei pathway (0 = target diretto del gene causale).
+  max_hops: 2
+  # Punteggio minimo per comparire nel report.
+  min_score: 0.15
+
+  # Tetto ai candidati per cui si interroga PubMed. Esiste solo per il costo:
+  # la selezione vera e' calcolata dal criterio in bundle._literature_shortlist.
+  #
+  # PERCHE' 1500 E NON 400
+  # Misurato sui 22 casi del banco di prova: il caso piu' esigente ne richiede
+  # 1386, e la somma su tutti i casi e' 13.174 candidati. Con 400 quindici casi
+  # su ventidue venivano troncati, e ogni "non trovato" diventava ambiguo — non
+  # si distingueva un fallimento del metodo da un candidato mai interrogato.
+  # Alzare il tetto oltre il massimo osservato costa circa dodici minuti in piu'
+  # sull'intero banco e restituisce numeri senza asterischi.
+  #
+  # Il tetto resta perche' una malattia con annotazioni molto piu' ricche
+  # potrebbe superarlo, e in quel caso il report deve dichiararlo invece di
+  # interrogare PubMed senza limite.
+  literature_shortlist_cap: 1500
+
+# --- Ponte fenotipico (seconda strategia di ricerca, vedi pipeline/phenotype.py) ---
+phenotype_bridge:
+  # Disattivabile: chi vuole solo il ramo meccanicistico mette false.
+  enabled: true
+  # Quante malattie simili usare come punto di ingresso aggiuntivo.
+  # NOTA SULLA TARATURA: sul caso pilota Niemann-Pick la malattia di Gaucher,
+  # che porta il riposizionamento noto (miglustat), compare intorno alla
+  # 35esima posizione. Il valore predefinito NON e' stato scelto per includerla
+  # — sarebbe stato tarare sul caso che si vuole far funzionare — ma sul costo
+  # computazionale. La sensibilita' del risultato a questo parametro e'
+  # riportata in docs/PILOT_RESULTS.md.
+  max_bridges: 30
+  min_similarity: 0.15
+  # Sovrapposizione minima di termini fenotipici, per evitare che la
+  # somiglianza si regga su una singola coincidenza di annotazione rara.
+  min_shared_terms: 5
+
+# --- Componenti dello score, pesi normalizzati a somma 1.0 ---
+weights:
+  pathway_proximity: 0.25
+  pathway_specificity: 0.15
+  direction_coherence: 0.25
+  interaction_support: 0.10
+  literature_support: 0.10
+  route_directness: 0.15
+
+components:
+  pathway_proximity:
+    # hop 0 = il farmaco agisce direttamente sul gene causale
+    # hop 1 = agisce su un gene nello stesso pathway del gene causale
+    # hop 2 = agisce su un gene in un pathway padre/figlio
+    by_hop: { 0: 1.00, 1: 0.60, 2: 0.30 }
+
+  pathway_specificity:
+    # Un pathway piccolo e' molto piu' informativo di uno grande.
+    # score = 1 - log(size) / log(max_pathway_size), troncato a [0, 1].
+    mode: log_inverse
+
+  direction_coherence:
+    # Il punto in cui la maggior parte dei metodi naive di pathway overlap sbaglia:
+    # se la malattia e' loss-of-function e il farmaco inibisce un gene a valle,
+    # l'effetto atteso puo' essere peggiorativo, non terapeutico.
+    # 'unknown' NON e' neutro: abbassa il punteggio, perche' non sapere e' un difetto
+    # dell'evidenza, non un'assenza di problema.
+    coherent: 1.00
+    unknown: 0.30
+    incoherent: 0.00
+    # Un candidato incoerente non viene nascosto: viene mostrato e marcato,
+    # perche' sapere cosa NON provare e' un risultato.
+    keep_incoherent: true
+
+  interaction_support:
+    # Numero di database a monte distinti in DGIdb che riportano l'interazione.
+    # Saturazione: oltre questo numero non si guadagna altro.
+    saturation_at: 4
+
+  literature_support:
+    # Solo CONTEGGIO di articoli reali su PubMed. Nessuna interpretazione del
+    # contenuto: il conteggio misura attenzione della ricerca, non efficacia.
+    saturation_at: 20
+    queries:
+      - drug_and_disease
+      - drug_and_causal_gene
+
+  route_directness:
+    # Quanto e' diretto il percorso dalla malattia al candidato.
+    #   1.0  il gene di partenza e' il gene causale della malattia interrogata
+    #   sim  il gene e' preso in prestito da una malattia fenotipicamente simile,
+    #        e vale la somiglianza stessa (tipicamente 0.15-0.35)
+    # Serve a impedire che un candidato arrivato per somiglianza clinica competa
+    # alla pari con uno ancorato al gene causale reale. Un ponte fenotipico e'
+    # un modo di generare ipotesi che il ramo pathway non vede, non una prova.
+    direct: 1.0
+
+# --- Traduzione dello score in un livello di evidenza dichiarato ---
+# La soglia sotto cui il flag di evidenza debole e' SEMPRE presente nel report.
+tiers:
+  - { name: "moderata",     min_score: 0.65, weak_evidence_flag: false }
+  - { name: "limitata",     min_score: 0.45, weak_evidence_flag: true }
+  - { name: "debole",       min_score: 0.25, weak_evidence_flag: true }
+  - { name: "speculativa",  min_score: 0.00, weak_evidence_flag: true }
+# Tetto al livello di evidenza quando la direzione dell'effetto non e'
+# determinata. Non e' una taratura di soglia ma una regola: non si puo'
+# definire "moderata" un'evidenza di cui non si sa se il farmaco correggerebbe
+# o aggraverebbe il difetto. Senza questo tetto, il rumore ad alto punteggio
+# ma privo di direzione (per esempio ASPIRIN -> TSC1 nel caso pilota) si
+# presenta al lettore con lo stesso livello di un candidato verificato.
+max_tier_without_direction: "limitata"
+
+# Nota: non esiste un tier "forte". Nessuna combinazione di evidenza puramente
+# computazionale giustifica quel termine, e il vocabolario del report non deve
+# offrire una parola che un lettore frettoloso possa leggere come efficacia.

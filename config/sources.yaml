@@ -1,0 +1,157 @@
+# Registro delle fonti dati. Il repo NON ridistribuisce dati: questo file
+# descrive dove prenderli, sotto quale licenza, e come sono strutturati.
+# Ogni download registra versione, data di accesso e checksum in
+# data/raw/manifest.json (vedi repurposerd.provenance).
+
+sources:
+
+  hgnc:
+    name: "HGNC — HUGO Gene Nomenclature Committee"
+    homepage: "https://www.genenames.org/"
+    license: "CC0-1.0"
+    license_url: "https://www.genenames.org/about/"
+    citation: "Seal RL et al. Genenames.org: the HGNC resources in 2023. Nucleic Acids Res."
+    role: "Normalizzazione dei simboli genici e mapping symbol -> Entrez / UniProt / OMIM."
+    files:
+      - id: hgnc_complete_set
+        url: "https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/hgnc_complete_set.txt"
+        filename: "hgnc_complete_set.txt"
+        format: tsv
+
+  mondo:
+    name: "Mondo Disease Ontology"
+    homepage: "https://mondo.monarchinitiative.org/"
+    license: "CC-BY-4.0"
+    license_url: "https://github.com/monarch-initiative/mondo/blob/master/LICENSE"
+    citation: "Vasilevsky NA et al. Mondo: Unifying diseases for the world, by the world. medRxiv 2022."
+    role: "Identificatore canonico della malattia e cross-reference verso Orphanet / OMIM."
+    # Si usa il subset 'rare' (~33 MB) invece della release completa (~240 MB):
+    # copre esattamente il dominio del progetto ed e' molto piu' rapido da elaborare.
+    files:
+      - id: mondo_rare_obo
+        url: "https://github.com/monarch-initiative/mondo/releases/latest/download/mondo-rare.obo"
+        filename: "mondo-rare.obo"
+        format: obo
+
+  orphanet:
+    name: "Orphanet / Orphadata — associazioni malattia-gene"
+    homepage: "https://www.orphadata.com/"
+    license: "CC-BY-4.0"
+    license_url: "https://creativecommons.org/licenses/by/4.0/"
+    citation: "Orphanet: an online database of rare diseases and orphan drugs. INSERM 1997."
+    role: "Gene causale curato per malattia rara, con tipo di associazione e PMID di validazione."
+    files:
+      - id: orphanet_gene_associations
+        url: "https://www.orphadata.com/data/xml/en_product6.xml"
+        filename: "en_product6.xml"
+        format: xml
+
+  reactome:
+    name: "Reactome Pathway Database"
+    homepage: "https://reactome.org/"
+    license: "CC0-1.0"
+    license_url: "https://reactome.org/license"
+    citation: "Milacic M et al. The Reactome Pathway Knowledgebase 2024. Nucleic Acids Res."
+    role: "Appartenenza gene -> pathway e gerarchia fra pathway. Fonte del ponte meccanicistico."
+    files:
+      - id: reactome_gene_to_pathway
+        url: "https://reactome.org/download/current/NCBI2Reactome_All_Levels.txt"
+        filename: "NCBI2Reactome_All_Levels.txt"
+        format: tsv
+        columns: [entrez_id, pathway_id, url, pathway_name, evidence_code, species]
+      - id: reactome_pathway_relations
+        url: "https://reactome.org/download/current/ReactomePathwaysRelation.txt"
+        filename: "ReactomePathwaysRelation.txt"
+        format: tsv
+        columns: [parent_id, child_id]
+      - id: reactome_pathways
+        url: "https://reactome.org/download/current/ReactomePathways.txt"
+        filename: "ReactomePathways.txt"
+        format: tsv
+        columns: [pathway_id, pathway_name, species]
+
+  dgidb:
+    name: "DGIdb v5 — Drug Gene Interaction Database"
+    homepage: "https://dgidb.org/"
+    license: "MIT (codice); le interazioni aggregano fonti a monte con licenze eterogenee"
+    license_url: "https://dgidb.org/about"
+    citation: "Cannon M et al. DGIdb 5.0. Nucleic Acids Res 2024."
+    role: "Interazioni farmaco-gene, tipo di interazione e flag di approvazione regolatoria."
+    caveat: >
+      DGIdb aggrega decine di fonti a monte con licenze diverse. La colonna
+      interaction_source_db_name viene sempre propagata nel report proprio per
+      rendere tracciabile la provenienza a monte di ogni singola interazione.
+    files:
+      - id: dgidb_interactions
+        url: "https://dgidb.org/data/latest/interactions.tsv"
+        filename: "dgidb_interactions.tsv"
+        format: tsv
+
+  hpo:
+    name: "HPO — Human Phenotype Ontology"
+    homepage: "https://hpo.jax.org/"
+    # ATTENZIONE: HPO non usa una licenza standard. Il campo dcterms:license
+    # dell'ontologia punta a https://hpo.jax.org/app/license, che alla data di
+    # verifica (2026-09-01) restituisce 404, e il registro OBO Foundry riporta
+    # per HPO una licenza propria («hpo») e non una Creative Commons.
+    # Non essendo verificabili i termini esatti, sono dichiarati come sono:
+    # incerti. Questo strumento non ridistribuisce dati, quindi l'obbligo di
+    # verifica ricade su chi li scarica, ed e' per questo che la nota compare
+    # anche nel report generato.
+    license: "Licenza propria HPO (non standard) — termini da verificare alla fonte"
+    license_url: "https://hpo.jax.org/app/license"
+    license_status: "non verificabile automaticamente al 2026-09-01 (URL 404)"
+    citation: "Gargano MA et al. The Human Phenotype Ontology in 2024. Nucleic Acids Res."
+    role: >
+      Seconda strategia di ricerca, indipendente dai pathway: similarita'
+      fenotipica fra malattie rare. Serve a raggiungere i casi in cui il farmaco
+      agisce su una conseguenza a valle del difetto e non sullo stesso processo,
+      che il ramo basato sui pathway non puo' vedere per costruzione.
+    files:
+      - id: hpo_obo
+        url: "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/hp-base.obo"
+        filename: "hp-base.obo"
+        format: obo
+      - id: hpo_disease_annotations
+        url: "https://github.com/obophenotype/human-phenotype-ontology/releases/latest/download/phenotype.hpoa"
+        filename: "phenotype.hpoa"
+        format: tsv
+        columns: [database_id, disease_name, qualifier, hpo_id, reference, evidence,
+                  onset, frequency, sex, modifier, aspect, biocuration]
+
+  openfda:
+    name: "openFDA — Drug Labeling API"
+    homepage: "https://open.fda.gov/apis/drug/label/"
+    license: "Public Domain (U.S. Government work)"
+    license_url: "https://open.fda.gov/license/"
+    role: "Conferma indipendente dello stato di approvazione e delle indicazioni etichettate."
+    api: "https://api.fda.gov/drug/label.json"
+
+  pubmed:
+    name: "PubMed / NCBI E-utilities"
+    homepage: "https://www.ncbi.nlm.nih.gov/books/NBK25501/"
+    license: "Metadati liberamente riutilizzabili; il testo degli abstract puo' essere protetto."
+    license_url: "https://www.ncbi.nlm.nih.gov/home/about/policies/"
+    role: "Grounding: conteggio e identificativi di letteratura reale a supporto di ogni collegamento."
+    api: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    policy: >
+      Si memorizzano solo PMID, titolo, rivista e anno. Non si scaricano ne' si
+      citano testualmente abstract o full text al di fuori del PMC Open Access
+      subset. Nessuno scraping oltre le E-utilities. Rate limit rispettato.
+
+# --- Escluse deliberatamente, con motivazione tracciabile ---
+excluded:
+  - name: "DisGeNET"
+    reason: >
+      Dal 2023 modello commerciale. L'ultima release pienamente aperta (v7.0)
+      e' CC BY-NC-SA 4.0: la clausola NonCommercial e' incompatibile con un
+      progetto a licenza permissiva e la clausola ShareAlike si propagherebbe
+      ai derivati. Sostituita da Orphanet + HGNC + (in fase 2) Open Targets.
+  - name: "KEGG"
+    reason: >
+      Nonostante sia la risorsa di pathway piu' nota, l'accesso programmatico e
+      la ridistribuzione sono sotto licenza restrittiva. Sostituita da Reactome (CC0).
+  - name: "OMIM (dati grezzi)"
+    reason: >
+      Ridistribuzione soggetta a registrazione e restrizioni. Si usano solo gli
+      identificatori OMIM come cross-reference, mai il contenuto.

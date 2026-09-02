@@ -1,0 +1,120 @@
+# Annotazioni meccanicistiche curate a mano, con provenienza esplicita.
+#
+# PERCHE' QUESTO FILE ESISTE
+# Le fonti di fase 1 (Reactome, Orphanet, DGIdb) dicono CHE due geni stanno
+# nello stesso pathway, ma non dicono con quale SEGNO sono collegati, ne' se
+# una malattia nasce da perdita o da guadagno di funzione. Senza quel segno,
+# "farmaco e malattia condividono un pathway" e' un'affermazione priva di
+# direzione: puo' indicare un candidato terapeutico o un candidato dannoso.
+#
+# Piuttosto che indovinare con un'euristica, questo layer e' dichiarato,
+# versionato e citato. Tutto cio' che non e' qui dentro vale 'unknown', e
+# 'unknown' abbassa il punteggio (vedi config/scoring.yaml).
+#
+# In fase 2 questo file va sostituito, o almeno alimentato, dai dati di
+# regolazione a livello di reazione di Reactome. Finche' non accade, ogni riga
+# qui presente e' una asserzione umana e va trattata come tale.
+
+# --- Meccanismo della malattia: la variante causale perde o guadagna funzione? ---
+disease_mechanism:
+  "MONDO:0001734":
+    label: "tuberous sclerosis"
+    mechanism: loss_of_function
+    causal_genes: [TSC1, TSC2]
+    rationale: >
+      TSC1 e TSC2 formano il complesso TSC, regolatore negativo di mTORC1 via
+      la GTPasi RHEB. Le varianti patogenetiche sono inattivanti: la perdita del
+      complesso rimuove l'inibizione e produce iperattivazione costitutiva di mTORC1.
+    curated_by: "seed del repository"
+    sources:
+      - "PMID:18606162"
+      - "ORPHA:805"
+
+  "MONDO:0018982":
+    label: "Niemann-Pick disease type C"
+    mechanism: loss_of_function
+    causal_genes: [NPC1, NPC2]
+    rationale: >
+      Varianti inattivanti in NPC1/NPC2 compromettono l'esporto del colesterolo
+      non esterificato dal compartimento endolisosomiale, con accumulo secondario
+      di sfingolipidi.
+    curated_by: "seed del repository"
+    sources:
+      - "ORPHA:646"
+
+# --- Relazioni regolatorie con segno fra geni ---
+# 'sign' e' l'effetto di source SU target:
+#   negative = source inibisce/reprime target
+#   positive = source attiva/promuove target
+signed_edges:
+  - source: TSC2
+    target: MTOR
+    sign: negative
+    via: "complesso TSC1-TSC2 -> RHEB-GTP -> mTORC1"
+    rationale: >
+      Il complesso TSC agisce da GTPase-activating protein su RHEB; la sua
+      perdita mantiene RHEB nello stato attivo legato a GTP, che attiva mTORC1.
+    curated_by: "seed del repository"
+    sources:
+      - "PMID:12869586"
+      - "REACTOME:R-HSA-165159"
+
+  - source: TSC1
+    target: MTOR
+    sign: negative
+    via: "complesso TSC1-TSC2 -> RHEB-GTP -> mTORC1"
+    rationale: "Come TSC2: TSC1 stabilizza il complesso e ne condivide la funzione inibitoria."
+    curated_by: "seed del repository"
+    sources:
+      - "PMID:12869586"
+
+  - source: TSC2
+    target: RHEB
+    sign: negative
+    via: "attivita' GAP diretta su RHEB"
+    rationale: "TSC2 contiene il dominio GAP che idrolizza RHEB-GTP in RHEB-GDP."
+    curated_by: "seed del repository"
+    sources:
+      - "PMID:12869586"
+
+# --- Come si combinano i segni per dare la coerenza direzionale ---
+# Regola: partendo dal meccanismo di malattia, si propaga il segno lungo l'arco
+# regolatorio fino al bersaglio del farmaco, ottenendo lo stato ATTESO del
+# bersaglio nella malattia. Un farmaco e' coerente se la sua azione si oppone a
+# quello stato.
+#
+#   LoF del gene causale + arco negativo  -> bersaglio IPERATTIVO  -> serve un inibitore
+#   LoF del gene causale + arco positivo  -> bersaglio IPOATTIVO   -> serve un attivatore
+#   GoF del gene causale + arco negativo  -> bersaglio IPOATTIVO   -> serve un attivatore
+#   GoF del gene causale + arco positivo  -> bersaglio IPERATTIVO  -> serve un inibitore
+#
+# La classificazione dei tipi di interazione DGIdb in azione farmacologica.
+interaction_semantics:
+  inhibiting:
+    - inhibitor
+    - antagonist
+    - blocker
+    - negative modulator
+    - inverse agonist
+    - antibody
+    - suppressor
+    - inhibitory allosteric modulator
+    - channel blocker
+  activating:
+    - agonist
+    - activator
+    - positive modulator
+    - inducer
+    - partial agonist
+    - positive allosteric modulator
+    - stimulator
+  ambiguous:
+    - modulator
+    - binder
+    - ligand
+    - other/unknown
+    - allosteric modulator
+    - cofactor
+    - substrate
+    - product of
+    - "null"

@@ -1,0 +1,31 @@
+RepurposeRD
+Copyright 2026 RepurposeRD contributors
+
+Questo prodotto include software sviluppato dai contributori del progetto
+RepurposeRD, distribuito sotto licenza Apache License 2.0 (vedi LICENSE).
+
+--------------------------------------------------------------------------
+DATI
+
+Questo software NON ridistribuisce dati biomedici. Scarica le fonti aperte
+sulla macchina dell'utente al momento dell'esecuzione. Ogni fonte resta
+soggetta alla propria licenza, elencata in config/sources.yaml e descritta
+in DATA_SOURCES.md:
+
+  HGNC                  CC0 1.0
+  Mondo Disease Ontology CC BY 4.0
+  Orphanet / Orphadata   CC BY 4.0
+  Reactome               CC0 1.0
+  DGIdb v5               aperta; aggrega fonti a monte con licenze eterogenee
+  openFDA                pubblico dominio (opera del governo statunitense)
+  PubMed / E-utilities   metadati riutilizzabili; abstract potenzialmente protetti
+
+Chi ridistribuisce un database costruito con questo software e' tenuto a
+verificare la compatibilita' delle licenze delle fonti che vi ha incluso.
+
+--------------------------------------------------------------------------
+AVVERTENZA
+
+Questo software genera ipotesi di ricerca computazionali. Non e' un
+dispositivo medico, non e' uno strumento diagnostico e non fornisce consigli
+medici. Vedi DISCLAIMER.md.

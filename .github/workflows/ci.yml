@@ -1,0 +1,131 @@
+# Integrazione continua.
+#
+# I test girano SENZA i dati scaricati: nessuna fase ha bisogno dei 180 MB di
+# fonti aperte, perche' ogni test costruisce il proprio store sintetico in
+# memoria o usa campioni minimi. E' una proprieta' voluta — una suite che
+# richiedesse il download reale sarebbe lenta, dipenderebbe dalla disponibilita'
+# di sette servizi esterni, e fallirebbe a ogni loro aggiornamento per ragioni
+# che non sono difetti del codice.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test — Python ${{ matrix.python }} su ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest]
+        include:
+          # Windows e' il caso in cui e' emerso il problema che ha portato a
+          # rimuovere pydantic: vale la pena verificarlo a ogni modifica.
+          - python: "3.13"
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Installa le dipendenze bloccate
+        run: uv sync --frozen --extra dev
+
+      - name: Lint
+        run: uv run ruff check src tests
+
+      - name: Formattazione
+        run: uv run ruff format --check src tests
+
+      - name: Test
+        run: uv run pytest -q
+
+  # Le regole non negoziabili del progetto (vedi CONTRIBUTING.md) hanno test che
+  # le presidiano. Questa fase le isola perche' un fallimento qui non e' un test
+  # rotto: e' una promessa infranta, e va letto come tale in una pull request.
+  invariants:
+    name: Invarianti del progetto
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installa uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen --extra dev
+
+      - name: Il validatore anti-allucinazione regge
+        run: uv run pytest tests/test_validator.py -q
+
+      - name: Il testo generato non promette efficacia
+        run: uv run pytest tests/test_scoring_and_report.py -q -k "efficacia or disclaimer or forte"
+
+      - name: Il limite di frequenza verso le API pubbliche e' rispettato
+        run: uv run pytest tests/test_ratelimit.py -q
+
+      - name: Ogni voce del banco di prova porta una fonte
+        run: uv run pytest tests/test_benchmark.py -q -k "fonte or tipi or unici"
+
+      - name: Nessuna dipendenza con codice nativo non firmato
+        # pydantic e' stato rimosso perche' Smart App Control su Windows blocca
+        # `pydantic_core`. Se rientrasse da una dipendenza transitiva, il
+        # progetto tornerebbe ineseguibile sui Windows aggiornati senza che
+        # nessuno se ne accorga.
+        run: |
+          if uv run python -c "import pydantic" 2>/dev/null; then
+            echo "::error::pydantic e' tornato fra le dipendenze — vedi la nota in src/repurposerd/models.py"
+            exit 1
+          fi
+          echo "nessun pydantic: corretto"
+
+  # Le fonti aperte cambiano schema senza preavviso. Questa verifica non gira a
+  # ogni commit — fallirebbe per ragioni fuori dal nostro controllo e la CI
+  # smetterebbe di essere un segnale — ma settimanalmente dice se un parser si
+  # e' disallineato prima che se ne accorga un utente.
+  sources:
+    name: Le fonti sono ancora raggiungibili
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --frozen
+      - name: Verifica gli URL dichiarati in config/sources.yaml
+        run: |
+          uv run python - <<'PY'
+          import sys, urllib.request, yaml
+          cfg = yaml.safe_load(open("config/sources.yaml", encoding="utf-8"))
+          errori = []
+          for sid, spec in cfg["sources"].items():
+              for f in spec.get("files") or []:
+                  req = urllib.request.Request(f["url"], method="HEAD")
+                  try:
+                      with urllib.request.urlopen(req, timeout=60) as r:
+                          print(f"  {r.status}  {sid}:{f['id']}")
+                  except Exception as exc:
+                      errori.append(f"{sid}:{f['id']} — {exc}")
+          if errori:
+              print("\nfonti non raggiungibili:")
+              for e in errori:
+                  print(" ", e)
+              sys.exit(1)
+          PY
