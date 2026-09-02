@@ -3,7 +3,10 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 Le versioni seguono [SemVer](https://semver.org/lang/it/).
 
-## [Non rilasciato]
+## [0.1.0] — 2026-09-02
+
+Prima versione pubblica. Genera ipotesi di riposizionamento terapeutico per
+malattie rare monogeniche, in locale, da sole fonti aperte.
 
 ### Aggiunto
 
@@ -44,10 +47,6 @@ Le versioni seguono [SemVer](https://semver.org/lang/it/).
   spaziatura del singolo intervallo invece della garanzia effettiva, che e'
   cumulativa.
 
-## [0.1.0] — non ancora rilasciata
-
-Prima versione. Genera ipotesi di riposizionamento terapeutico per malattie rare
-monogeniche, in locale, da sole fonti aperte.
 
 ### Cosa fa
 
@@ -103,9 +102,9 @@ Elencati per esteso in `docs/LIMITATIONS.md`. I tre che contano:
 1. **La farmacocinetica e' assente.** Un candidato direzionalmente corretto puo'
    essere inutile perche' non raggiunge il tessuto interessato. Non esiste una
    fonte aperta utilizzabile: e' un limite del dominio.
-2. **La curazione direzionale copre 2 malattie.** Il banco mostra che
-   l'ordinamento regge lo stesso, ma il livello di evidenza resta
-   sistematicamente sottostimato dove il meccanismo non e' annotato.
+2. **Il segno delle relazioni copre tre archi.** Il meccanismo di malattia
+   arriva ora da Orphanet per 1.025 malattie, ma senza il segno un candidato a
+   uno o due passi resta a evidenza `limitata` anche quando e' corretto.
 3. **Nessuno all'infuori degli autori ha ancora eseguito lo strumento** su una
    malattia che non abbiano scelto loro. Nessun test colma questa lacuna.
 
