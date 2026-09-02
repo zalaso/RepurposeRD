@@ -1,5 +1,8 @@
 # Fonti dati
 
+
+*[English](DATA_SOURCES.en.md) · **Italiano***
+
 ## Principio: il repository distribuisce codice, non dati
 
 RepurposeRD non ridistribuisce alcun dato biomedico. Distribuisce il codice ETL che scarica le fonti sulla macchina di chi lo usa, registrando per ciascuna licenza, versione, data di accesso e checksum SHA-256 in `data/raw/manifest.json`.
@@ -28,6 +31,7 @@ Questa scelta non e' solo prudenza legale. Le fonti aperte in ambito biomedico h
 - **Licenza**: CC BY 4.0, dichiarata all'interno del file stesso
 - **Ruolo**: associazioni malattia-gene curate, con il **tipo** di associazione e i PMID di validazione
 - **Perche' e' la fonte giusta**: distingue esplicitamente `Disease-causing germline mutation(s) in` da `Modifying germline mutation in` e da `Candidate gene tested in`. Solo il primo gruppo viene accettato come causale. Nella sclerosi tuberosa e' questa distinzione a tenere fuori IFNG, che Orphanet annota come modificatore.
+- **Usata anche per il meccanismo di malattia**: Orphanet distingue `(loss of function)` da `(gain of function)` dentro il tipo di associazione. Il dato viene derivato automaticamente per 1.025 malattie risolvibili a un termine Mondo — vedi `pipeline/direction.py::orphanet_mechanism`. Dove i geni causali della stessa malattia portano annotazioni in conflitto il risultato e' `unknown`, non una scelta a maggioranza.
 - **File**: `en_product6.xml` (~23 MB)
 
 ### Reactome

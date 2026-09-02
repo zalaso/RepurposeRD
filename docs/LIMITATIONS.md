@@ -1,5 +1,8 @@
 # Limiti noti
 
+
+*[English](LIMITATIONS.en.md) · **Italiano***
+
 Questo documento e' scritto per essere letto **prima** di fidarsi di un report, non dopo. Elenca cio' che il metodo non puo' fare, incluse le debolezze che non hanno ancora una soluzione.
 
 ---
@@ -145,6 +148,7 @@ Uno score a pesi dichiarati e' peggiore di un buon modello, che qui non e' dispo
 - Sono trattate le malattie **monogeniche**. Su una malattia poligenica il concetto stesso di "gene causale" non regge, e lo strumento non lo verifica: se Orphanet riporta piu' geni causali, li usa tutti.
 - Solo dati umani. Le evidenze da organismi modello sono ignorate in fase 1.
 - Nessun modello di farmacocinetica, biodisponibilita' o penetrazione della barriera ematoencefalica. Un candidato direzionalmente perfetto puo' essere del tutto inutile perche' non raggiunge il tessuto interessato. Questa dimensione e' **completamente assente** dal punteggio.
+- **I report sono generati soltanto in italiano.** Le difese contro la sovradichiarazione sono costruite su radici di parole italiane, quindi un report inglese richiede un proprio elenco di espressioni vietate sottoposto a verifica, non una traduzione di stringhe. E' un limite reale all'uso internazionale, ed e' elencato qui invece che in una roadmap perche' riguarda chi puo' usare lo strumento oggi.
 
 ---
 

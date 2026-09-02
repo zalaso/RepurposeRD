@@ -1,5 +1,7 @@
 # RepurposeRD
 
+*[English](README.en.md) · **Italiano***
+
 [![CI](https://github.com/zalaso/RepurposeRD/actions/workflows/ci.yml/badge.svg)](https://github.com/zalaso/RepurposeRD/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
@@ -231,6 +233,20 @@ repurposerd run MONDO:0001734 --bundle-out out/b.json   # salva l'evidence bundl
 
 ---
 
+## Lingua
+
+La documentazione e' disponibile in italiano e in inglese. **I report generati
+sono per ora solo in italiano**, come i prompt che ne producono la prosa.
+
+Rendere selezionabile la lingua del report non e' un lavoro di traduzione di
+stringhe: il validatore anti-allucinazione riconosce radici vietate (`efficac`, e
+altre) che sono specifiche di una lingua, e un report inglese ha bisogno del
+proprio elenco verificato prima di poter essere considerato affidabile. **Un
+report tradotto con un validatore non tradotto sarebbe meno sicuro che nessun
+report inglese**, ed e' la ragione per cui non e' stato fatto in fretta.
+
+---
+
 ## Il banco di prova
 
 Con due soli casi pilota non si poteva dire se una modifica ai pesi migliorasse
@@ -348,7 +364,7 @@ Dettagli, motivazioni e **fonti deliberatamente escluse** (DisGeNET, KEGG, OMIM 
 Elencati per esteso in [docs/LIMITATIONS.md](docs/LIMITATIONS.md). I tre che contano di piu':
 
 1. **Il metodo non vede la fisiopatologia a valle.** Cattura i casi in cui il farmaco agisce sullo *stesso* processo alterato, non quelli in cui agisce su una *conseguenza* di quel processo. Il caso pilota Niemann-Pick lo dimostra, e nessuna taratura lo risolve.
-2. **La direzione dell'effetto e' curata a mano, non derivata.** Le fonti di fase 1 dicono *che* due geni condividono un pathway, non con quale segno sono collegati. `config/mechanism.yaml` contiene asserzioni umane con citazione; tutto il resto vale `unknown`, e `unknown` abbassa il punteggio.
+2. **La direzione dell'effetto e' nota solo in parte.** Il meccanismo della malattia (perdita o guadagno di funzione) viene derivato da Orphanet, che lo dichiara per 1.025 malattie. Ma il *segno* della relazione fra gene causale e bersaglio del farmaco resta curato a mano e copre tre archi: senza quello, un candidato a distanza uno o due resta `unknown` anche quando il meccanismo e' noto, e `unknown` abbassa il punteggio.
 3. **La co-appartenenza a un pathway non e' un meccanismo.** E' un indizio di prossimita' funzionale. Il filtro sulla dimensione del pathway e la penalita' direzionale servono a limitare il danno, non a eliminarlo.
 4. **Il conteggio di letteratura misura attenzione, non efficacia.** Un accostamento molto studiato puo' esserlo perche' e' stato ripetutamente smentito.
 

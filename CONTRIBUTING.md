@@ -1,5 +1,8 @@
 # Contribuire a RepurposeRD
 
+
+*[English](CONTRIBUTING.en.md) · **Italiano***
+
 ## Prima di tutto: il principio che tiene in piedi il progetto
 
 **Ogni affermazione deve poter essere ricondotta a una fonte reale, e ogni output deve essere onesto sul proprio grado di incertezza.**
@@ -106,6 +109,8 @@ Se la licenza ha clausole NonCommercial o ShareAlike, dichiara nella PR cosa com
 - `sources`: almeno un PMID o un identificatore di fonte. **Un'asserzione curata senza fonte non vale piu' di un'opinione**, e il progetto non la accetta.
 - `curated_by`: chi la sostiene
 
+Il meccanismo di malattia (perdita o guadagno di funzione) viene ora derivato automaticamente da Orphanet per oltre mille malattie. Una voce `disease_mechanism` scritta a mano serve solo dove Orphanet non lo dichiara **e** si dispone di una fonte solida: aggiungere a mano cio' che Orphanet gia' dice crea soltanto due verita' che possono divergere.
+
 Questo file ha un peso sproporzionato sui risultati (vedi `docs/LIMITATIONS.md`, punto 2). Le PR che lo toccano ricevono una revisione piu' attenta di quelle che toccano il codice.
 
 ## Le due strategie di ricerca
@@ -136,6 +141,7 @@ In ordine di impatto:
 3. **Una metrica di somiglianza fenotipica migliore.** L'attuale e' un Jaccard pesato per contenuto informativo; il best-match average di Resnik sarebbe piu' robusto alle differenze di numerosita' delle annotazioni, ma richiede il calcolo dell'antenato comune piu' informativo per coppia di termini. Chi lo affronta deve valutarlo su **piu** casi, non solo su quelli gia' noti: tarare la metrica sul caso che si vuole far funzionare e' il modo piu' rapido per costruire uno strumento che sembra funzionare.
 4. **Un controllo negativo piu' severo** di quello attuale (vedi `docs/LIMITATIONS.md`, punto 3).
 5. **Modellazione della farmacocinetica**, oggi completamente assente: un candidato direzionalmente perfetto puo' essere inutile perche' non raggiunge il tessuto interessato.
+6. **Selezione della lingua del report.** Oggi i report sono solo in italiano. Non e' un lavoro di traduzione di stringhe: il validatore anti-allucinazione riconosce radici vietate specifiche di una lingua, e un report inglese ha bisogno del proprio elenco verificato prima di poter essere considerato affidabile. Un report tradotto con un validatore non tradotto sarebbe meno sicuro che nessun report inglese.
 
 ## Stile
 

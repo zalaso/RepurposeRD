@@ -15,6 +15,13 @@ Le versioni seguono [SemVer](https://semver.org/lang/it/).
 - Annotazioni in conflitto fra i geni causali della stessa malattia producono
   `unknown`, non una scelta a maggioranza.
 
+- **Documentazione in inglese**: `README.en.md`, `DISCLAIMER.en.md`,
+  `DATA_SOURCES.en.md`, `CONTRIBUTING.en.md`, `docs/LIMITATIONS.en.md`. I report
+  restano in italiano, ed e' dichiarato dove serve: il validatore
+  anti-allucinazione riconosce radici vietate specifiche di una lingua, e un
+  report tradotto con un validatore non tradotto sarebbe meno sicuro di nessun
+  report inglese.
+
 ### Modificato
 
 - **L'impronta di configurazione include ora la versione del pacchetto.**

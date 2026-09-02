@@ -1,5 +1,8 @@
 # Disclaimer
 
+
+*[English](DISCLAIMER.en.md) · **Italiano***
+
 ## In breve
 
 **RepurposeRD produce ipotesi di ricerca generate al calcolatore. Non produce consigli medici.**
