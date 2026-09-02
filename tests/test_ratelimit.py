@@ -23,17 +23,48 @@ from repurposerd.ratelimit import RateLimiter, suggested_workers
 
 
 class TestGaranziaDiFrequenza:
-    def test_le_partenze_sono_distanziate(self):
+    def test_le_partenze_sono_distanziate_nel_complesso(self):
+        """La garanzia e' cumulativa, non intervallo per intervallo.
+
+        PERCHE' NON SI CONTROLLA IL SINGOLO INTERVALLO
+        Su Windows `time.sleep` ha una granularita' di circa 15,6 ms: le attese
+        si quantizzano su multipli di quel valore, e un intervallo da 50 ms
+        rimbalza fra 31 e 63 ms. Una versione precedente di questo test
+        controllava ogni singolo intervallo e falliva in CI in modo
+        intermittente — su intervalli osservati [0.047, 0.063, 0.031, 0.062,
+        0.047] che pero' **sommavano esattamente il minimo teorico**.
+
+        Il limitatore era corretto; era il test a misurare la cosa sbagliata.
+        Il tempo totale e' immune al jitter del sistema operativo perche' ogni
+        slot avanza `_next_slot` di un intervallo pieno a prescindere da quando
+        il thread si risvegli davvero.
+        """
+        rate = 20
+        n = 6
+        limiter = RateLimiter(per_second=rate)
+
+        inizio = time.monotonic()
+        for _ in range(n):
+            limiter.acquire()
+        durata = time.monotonic() - inizio
+
+        minimo_teorico = (n - 1) / rate
+        assert durata >= minimo_teorico * 0.95, f"{durata:.3f}s per {n} partenze"
+
+    def test_nessun_intervallo_collassa_a_zero(self):
+        """Il controllo debole che resta sensato sul singolo intervallo.
+
+        Non verifica la spaziatura esatta — quella dipende dal sistema
+        operativo — ma che il limitatore stia effettivamente attendendo invece
+        di lasciar passare tutto insieme.
+        """
         limiter = RateLimiter(per_second=20)
         istanti = []
         for _ in range(6):
             limiter.acquire()
             istanti.append(time.monotonic())
         intervalli = [b - a for a, b in itertools.pairwise(istanti)]
-        atteso = 1 / 20
-        # Tolleranza generosa verso il basso: la risoluzione dello sleep su
-        # Windows e' grossolana. Cio' che conta e' che non collassino a zero.
-        assert all(i >= atteso * 0.7 for i in intervalli), intervalli
+        assert all(i > 0.005 for i in intervalli), intervalli
 
     def test_il_limite_regge_con_piu_thread(self):
         """La garanzia deve valere a prescindere dalla concorrenza.
