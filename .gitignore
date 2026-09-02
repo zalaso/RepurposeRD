@@ -31,3 +31,6 @@ Thumbs.db
 
 # Avviatore per la prova manuale, non fa parte del prodotto
 prova.bat
+
+# log delle esecuzioni del banco: file di lavoro, non prodotto
+bench.log
