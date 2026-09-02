@@ -260,12 +260,19 @@ def build_bundle(
     console.print(f"  geni causali: [bold]{', '.join(c.gene.symbol for c in causal_genes)}[/bold]")
 
     # --- 2. meccanismo curato (determina la direzione attesa)
-    mechanism, mech_rationale, _mech_sources = direction_mod.disease_mechanism(disease.mondo_id)
+    mech_call = direction_mod.resolve_mechanism(
+        disease.mondo_id, con=con, orpha_codes=disease.orpha_codes
+    )
+    mechanism, mech_rationale = mech_call.mechanism, mech_call.rationale
+    mech_origin = mech_call.origin
     if shuffle_control:
         # Il meccanismo curato appartiene alla malattia reale, non al gene casuale:
         # tenerlo darebbe al controllo un vantaggio che non gli spetta.
-        mechanism, mech_rationale = DiseaseMechanism.UNKNOWN, None
-    console.print(f"  meccanismo: [bold]{mechanism.value}[/bold]")
+        mechanism, mech_rationale, mech_origin = DiseaseMechanism.UNKNOWN, None, "ignoto"
+    console.print(
+        f"  meccanismo: [bold]{mechanism.value}[/bold]"
+        + (f" [dim](fonte: {mech_origin})[/dim]" if mech_origin != "ignoto" else "")
+    )
 
     # --- 3. espansione sui pathway
     links = pw.expand(
@@ -437,6 +444,7 @@ def build_bundle(
         disease=disease,
         mechanism=mechanism,
         mechanism_rationale=mech_rationale,
+        mechanism_origin=mech_origin,
         causal_genes=causal_genes,
         candidates=final,
         generated_at=datetime.now(),

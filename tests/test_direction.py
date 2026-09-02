@@ -140,3 +140,103 @@ class TestGenePresoInPrestito:
         # qui si verifica che l'esito resti prudente.
         r = assess(UNK, "TSC2", "MTOR", ["inhibitor"], borrowed_gene=True)
         assert r.verdict == "unknown"
+
+
+class TestMeccanismoDerivatoDaOrphanet:
+    """Orphanet dichiara perdita o guadagno di funzione nel tipo di associazione.
+
+    E' la stessa informazione che `config/mechanism.yaml` conteneva a mano per
+    due malattie, gia' presente sul disco per oltre mille, curata dalla fonte e
+    sotto CC BY 4.0.
+    """
+
+    def _con(self, righe):
+        import duckdb
+
+        from repurposerd.store import SCHEMA, bulk_insert
+
+        c = duckdb.connect(":memory:")
+        c.execute(SCHEMA)
+        bulk_insert(c, "orphanet_gene_assoc", righe)
+        return c
+
+    def _riga(self, orpha, gene, tipo):
+        return {
+            "orpha_code": orpha,
+            "gene_symbol": gene,
+            "association_type": tipo,
+            "is_causal": True,
+        }
+
+    LOF = "Disease-causing germline mutation(s) (loss of function) in"
+    GOF = "Disease-causing germline mutation(s) (gain of function) in"
+    NEUTRO = "Disease-causing germline mutation(s) in"
+
+    def test_perdita_di_funzione(self):
+        from repurposerd.pipeline.direction import orphanet_mechanism
+
+        con = self._con([self._riga("ORPHA:1", "GENEA", self.LOF)])
+        call = orphanet_mechanism(con, ["ORPHA:1"])
+        assert call.mechanism is LOF
+        assert call.origin == "orphanet"
+        assert call.sources, "deve portare l'identificatore Orphanet come fonte"
+
+    def test_guadagno_di_funzione(self):
+        from repurposerd.pipeline.direction import orphanet_mechanism
+
+        con = self._con([self._riga("ORPHA:1", "GENEA", self.GOF)])
+        assert orphanet_mechanism(con, ["ORPHA:1"]).mechanism is GOF
+
+    def test_associazione_senza_meccanismo_non_produce_nulla(self):
+        """La maggior parte delle voci Orphanet non lo dichiara: dedurlo
+        sarebbe inventarlo."""
+        from repurposerd.pipeline.direction import orphanet_mechanism
+
+        con = self._con([self._riga("ORPHA:1", "GENEA", self.NEUTRO)])
+        assert orphanet_mechanism(con, ["ORPHA:1"]) is None
+
+    def test_annotazioni_in_conflitto_non_si_risolvono_a_maggioranza(self):
+        """Se i geni causali portano annotazioni opposte, la direzione resta
+        ignota. Un disaccordo fra fonti non si risolve votando: si dichiara."""
+        from repurposerd.pipeline.direction import orphanet_mechanism
+
+        con = self._con(
+            [
+                self._riga("ORPHA:1", "GENEA", self.LOF),
+                self._riga("ORPHA:1", "GENEB", self.LOF),
+                self._riga("ORPHA:1", "GENEC", self.GOF),
+            ]
+        )
+        assert orphanet_mechanism(con, ["ORPHA:1"]) is None
+
+    def test_senza_codici_orphanet_non_produce_nulla(self):
+        from repurposerd.pipeline.direction import orphanet_mechanism
+
+        assert orphanet_mechanism(self._con([]), []) is None
+
+
+class TestPrecedenzaDellaCurazione:
+    """La curazione a mano vince su Orphanet: porta una motivazione leggibile e
+    fonti scelte da chi l'ha inserita."""
+
+    def test_il_curato_ha_la_precedenza(self):
+        from repurposerd.pipeline.direction import resolve_mechanism
+
+        # La sclerosi tuberosa e' in config/mechanism.yaml.
+        call = resolve_mechanism("MONDO:0001734")
+        assert call.origin == "curato"
+        assert call.mechanism is LOF
+        assert call.rationale
+
+    def test_senza_store_resta_la_sola_curazione(self):
+        from repurposerd.pipeline.direction import resolve_mechanism
+
+        call = resolve_mechanism("MONDO:9999999")
+        assert call.mechanism is UNK
+        assert call.origin == "ignoto"
+
+    def test_l_origine_e_sempre_dichiarata(self):
+        from repurposerd.pipeline.direction import resolve_mechanism
+
+        for mondo in ("MONDO:0001734", "MONDO:9999999"):
+            assert resolve_mechanism(mondo).origin in {"curato", "orphanet", "ignoto"}

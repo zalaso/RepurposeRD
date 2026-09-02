@@ -1,11 +1,25 @@
 # Annotazioni meccanicistiche curate a mano, con provenienza esplicita.
 #
 # PERCHE' QUESTO FILE ESISTE
-# Le fonti di fase 1 (Reactome, Orphanet, DGIdb) dicono CHE due geni stanno
-# nello stesso pathway, ma non dicono con quale SEGNO sono collegati, ne' se
-# una malattia nasce da perdita o da guadagno di funzione. Senza quel segno,
-# "farmaco e malattia condividono un pathway" e' un'affermazione priva di
-# direzione: puo' indicare un candidato terapeutico o un candidato dannoso.
+# Reactome e DGIdb dicono CHE due geni stanno nello stesso pathway, ma non con
+# quale SEGNO sono collegati. Senza quel segno, "farmaco e malattia condividono
+# un pathway" e' un'affermazione priva di direzione: puo' indicare un candidato
+# terapeutico o un candidato dannoso.
+#
+# COSA NON SERVE PIU' SCRIVERE QUI
+# Il meccanismo della malattia (perdita o guadagno di funzione) viene ora
+# derivato automaticamente da Orphanet, che lo dichiara nel tipo di associazione
+# gene-malattia per **oltre mille malattie**. Vedi
+# `pipeline/direction.py::orphanet_mechanism`.
+#
+# Una voce `disease_mechanism` qui dentro serve solo quando Orphanet non lo
+# dichiara E si dispone di una fonte solida. Ha la precedenza sul dato derivato,
+# perche' porta una motivazione leggibile e fonti scelte — ma il caso ordinario
+# e' ormai coperto dalla fonte, e aggiungere a mano cio' che Orphanet gia' dice
+# significa solo creare due verita' che possono divergere.
+#
+# Gli `signed_edges` restano invece interamente a mano: nessuna fonte di fase 1
+# li fornisce.
 #
 # Piuttosto che indovinare con un'euristica, questo layer e' dichiarato,
 # versionato e citato. Tutto cio' che non e' qui dentro vale 'unknown', e

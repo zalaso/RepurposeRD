@@ -3,6 +3,33 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/).
 Le versioni seguono [SemVer](https://semver.org/lang/it/).
 
+## [Non rilasciato]
+
+### Aggiunto
+
+- **Il meccanismo di malattia viene derivato da Orphanet.** La fonte dichiara
+  perdita o guadagno di funzione nel tipo di associazione gene-malattia, e il
+  dato copre 1.025 malattie risolvibili a un termine Mondo, contro le 2 che
+  erano curate a mano. La curazione in `config/mechanism.yaml` mantiene la
+  precedenza; il report dichiara da quale delle due fonti venga l'attribuzione.
+- Annotazioni in conflitto fra i geni causali della stessa malattia producono
+  `unknown`, non una scelta a maggioranza.
+
+### Modificato
+
+- **L'impronta di configurazione include ora la versione del pacchetto.**
+  Copriva solo i file di configurazione, e una modifica di codice che cambia i
+  risultati lasciandoli identici produceva due report apparentemente
+  confrontabili ma non confrontabili. Resta il limite dichiarato che la versione
+  cambia a ogni rilascio, non a ogni commit.
+
+### Corretto
+
+- Un test del limitatore di frequenza falliva in modo intermittente su Windows,
+  dove `time.sleep` ha una granularita' di circa 15,6 ms. Verificava la
+  spaziatura del singolo intervallo invece della garanzia effettiva, che e'
+  cumulativa.
+
 ## [0.1.0] — non ancora rilasciata
 
 Prima versione. Genera ipotesi di riposizionamento terapeutico per malattie rare

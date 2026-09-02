@@ -1,3 +1,10 @@
+> [!WARNING]
+> **Questa baseline e' superata.** E' stata prodotta con l'impronta
+> `0291af9be1f5`, precedente alla derivazione del meccanismo di malattia da
+> Orphanet. I numeri qui sotto restano validi come fotografia di quella
+> configurazione, ma **non sono confrontabili** con report prodotti dalla
+> versione attuale. Va rieseguita con `repurposerd benchmark`.
+
 # Banco di prova — copertura sui riposizionamenti noti
 
 > [!NOTE]

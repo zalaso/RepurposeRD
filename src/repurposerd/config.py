@@ -83,13 +83,32 @@ def mechanism_config() -> dict[str, Any]:
 
 
 def config_digest() -> str:
-    """Hash stabile della configurazione che influenza il risultato.
+    """Impronta di cio' che determina il risultato: configurazione E versione.
 
-    Finisce nell'evidence bundle e nel report: due run con digest diverso non
-    sono confrontabili, e il lettore deve poterlo vedere.
+    Finisce nell'evidence bundle e in ogni report, dove serve a dire se due
+    documenti siano confrontabili.
+
+    PERCHE' C'E' ANCHE LA VERSIONE
+    Per un periodo l'impronta copriva solo i file di configurazione. Poi il
+    meccanismo di malattia ha iniziato a essere derivato anche da Orphanet
+    invece che solo da `config/mechanism.yaml`: una modifica di **codice**, che
+    cambia i risultati lasciando i file di configurazione identici. Due report
+    con la stessa impronta sarebbero apparsi confrontabili senza esserlo, che
+    e' peggio di non avere l'impronta.
+
+    Resta un limite dichiarato: la versione cambia a ogni rilascio, non a ogni
+    commit. Fra due modifiche non rilasciate l'impronta puo' coincidere pur
+    coprendo comportamenti diversi. Chi confronta report prodotti da copie di
+    lavoro diverse deve verificarlo per conto proprio.
     """
+    from . import __version__
+
     payload = json.dumps(
-        {"scoring": scoring_config(), "mechanism": mechanism_config()},
+        {
+            "scoring": scoring_config(),
+            "mechanism": mechanism_config(),
+            "version": __version__,
+        },
         sort_keys=True,
         ensure_ascii=False,
     )

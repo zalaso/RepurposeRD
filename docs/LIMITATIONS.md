@@ -58,13 +58,17 @@ Il difetto era grave e misurato: con una selezione fissa ai primi quaranta, migl
 
 ---
 
-## 2. La direzione dell'effetto e' curata a mano, e questo limita il metodo piu' di ogni altra cosa
+## 2. La direzione dell'effetto e' nota solo in parte
 
-Le fonti di fase 1 dicono **che** due geni condividono un pathway, non con quale **segno** siano collegati. Reactome contiene questa informazione a livello di reazione, ma il file di appartenenza gene-pathway usato qui non la espone.
+La valutazione direzionale richiede due ingredienti: il **meccanismo della malattia** (perdita o guadagno di funzione) e il **segno della relazione** fra gene causale e bersaglio del farmaco. Lo stato dei due e' molto diverso.
 
-Di conseguenza `config/mechanism.yaml` contiene asserzioni umane con citazione, e tutto il resto vale `unknown`.
+**Il meccanismo di malattia e' in gran parte risolto.** Orphanet lo dichiara esplicitamente nel tipo di associazione gene-malattia, e viene derivato automaticamente per **1.025 malattie** risolvibili a un termine Mondo — contro le 2 che erano curate a mano. Resta `unknown` dove nemmeno Orphanet lo dichiara, che e' la maggioranza delle voci, e dove i geni causali della stessa malattia portano annotazioni in conflitto: in quel caso non si sceglie a maggioranza, si dichiara l'incertezza.
 
-**Cosa comporta, misurato sul banco di prova.** Solo **3 casi su 22** hanno un meccanismo curato: gli altri 19 girano con direzione `unknown` dall'inizio alla fine. Eppure il banco restituisce 17/21 trovati e posizione mediana 2.
+**Il segno della relazione e' ancora interamente a mano**, e copre tre archi. Nessuna fonte di fase 1 lo fornisce: Reactome lo contiene a livello di reazione, ma il file di appartenenza gene-pathway usato qui non lo espone. E' quel che resta del punto (b).
+
+**Cosa comporta in pratica**: per un candidato a distanza zero — il farmaco agisce sul gene causale stesso — il solo meccanismo di malattia basta, perche' l'identita' vale come arco positivo. Per un candidato a distanza uno o due serve anche il segno, e senza quello la direzione resta ignota anche quando il meccanismo e' noto.
+
+**Cosa comporta, misurato sul banco di prova.** Prima della derivazione da Orphanet, solo **3 casi su 22** avevano un meccanismo; ora sono 7. Il banco pero' restituiva gia' 17/21 trovati e posizione mediana 2 **quando erano 3**.
 
 Questo **smentisce** un'affermazione che compariva qui in precedenza, secondo cui lo strumento avrebbe funzionato alle capacita' documentate solo sulla sclerosi tuberosa. Non e' cosi', e la distinzione e' importante:
 

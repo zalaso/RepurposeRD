@@ -37,6 +37,15 @@ _VERDICT_BADGE = {
     "unknown": "non determinabile",
 }
 
+# Da dove viene il meccanismo di malattia. Un'annotazione scritta a mano con
+# motivazione e PMID e una derivata da una fonte hanno autorita' diverse, e
+# nasconderlo farebbe apparire l'una come l'altra.
+_ORIGIN_IT = {
+    "curato": " — annotazione curata a mano in `config/mechanism.yaml`",
+    "orphanet": " — derivato dal tipo di associazione dichiarato da Orphanet",
+    "ignoto": " — nessuna fonte lo dichiara: la direzione restera' indeterminata",
+}
+
 _COMPONENT_IT = {
     "pathway_proximity": "prossimita' nel pathway",
     "pathway_specificity": "specificita' del pathway",
@@ -212,7 +221,8 @@ def render_report(bundle: EvidenceBundle, narration: NarrationReport | None = No
         parts.append(f"- **OMIM**: {', '.join(f'`{o}`' for o in d.omim_ids)}")
     parts += [
         f"- **Geni causali** (associazioni curate Orphanet): {causal or '_nessuno_'}",
-        f"- **Meccanismo annotato**: `{bundle.mechanism.value}`",
+        f"- **Meccanismo annotato**: `{bundle.mechanism.value}`"
+        + _ORIGIN_IT.get(bundle.mechanism_origin, ""),
     ]
     if bundle.mechanism_rationale:
         parts.append(f"- **Motivazione del meccanismo**: {bundle.mechanism_rationale.strip()}")

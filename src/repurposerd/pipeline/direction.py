@@ -28,20 +28,131 @@ un'assenza di problema, e il punteggio deve rifletterlo.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from ..config import mechanism_config
 from ..models import DirectionAssessment, DiseaseMechanism, DrugAction, TargetState
 
 
-def disease_mechanism(mondo_id: str) -> tuple[DiseaseMechanism, str | None, list[str]]:
-    """Meccanismo curato per la malattia. Default: UNKNOWN."""
+@dataclass(frozen=True)
+class MechanismCall:
+    """Meccanismo attribuito a una malattia, con l'indicazione di chi lo dice.
+
+    `origin` non e' decorativo: un'annotazione curata a mano con motivazione e
+    PMID e una derivata da Orphanet hanno autorita' diverse, e il lettore del
+    report deve poterle distinguere invece di vedere entrambe come "il
+    meccanismo".
+    """
+
+    mechanism: DiseaseMechanism
+    rationale: str | None = None
+    sources: list[str] = field(default_factory=list)
+    origin: str = "ignoto"  # curato | orphanet | ignoto
+
+
+def _curated_mechanism(mondo_id: str) -> MechanismCall | None:
     entry = (mechanism_config().get("disease_mechanism") or {}).get(mondo_id)
     if not entry:
-        return DiseaseMechanism.UNKNOWN, None, []
+        return None
     try:
         mech = DiseaseMechanism(entry.get("mechanism", "unknown"))
     except ValueError:
-        mech = DiseaseMechanism.UNKNOWN
-    return mech, entry.get("rationale"), list(entry.get("sources") or [])
+        return None
+    if mech is DiseaseMechanism.UNKNOWN:
+        return None
+    return MechanismCall(
+        mechanism=mech,
+        rationale=entry.get("rationale"),
+        sources=list(entry.get("sources") or []),
+        origin="curato",
+    )
+
+
+def orphanet_mechanism(con, orpha_codes: list[str]) -> MechanismCall | None:
+    """Meccanismo dichiarato da Orphanet nel tipo di associazione gene-malattia.
+
+    PERCHE' ESISTE
+    Orphanet distingue esplicitamente `Disease-causing germline mutation(s)
+    (loss of function) in` da `(gain of function) in`. E' la stessa
+    informazione che `config/mechanism.yaml` conteneva a mano per due malattie,
+    gia' presente sul disco per **oltre mille**, curata da Orphanet e sotto
+    licenza CC BY 4.0.
+
+    Non sostituisce la curazione a mano: quella ha la precedenza, perche' porta
+    una motivazione leggibile e fonti scelte. Copre pero' il caso di gran lunga
+    piu' frequente, cioe' la malattia che nessuno ha ancora annotato.
+
+    CONFLITTI
+    Se i geni causali di una stessa malattia portano annotazioni opposte, il
+    risultato e' `None`, non una scelta a maggioranza. Un disaccordo fra le
+    fonti non si risolve votando: si dichiara, e la direzione resta ignota.
+    """
+    if not orpha_codes:
+        return None
+
+    placeholders = ", ".join(["?"] * len(orpha_codes))
+    rows = con.execute(
+        f"""
+        SELECT DISTINCT association_type, gene_symbol
+        FROM orphanet_gene_assoc
+        WHERE orpha_code IN ({placeholders}) AND is_causal
+          AND association_type LIKE '%function)%'
+        """,
+        orpha_codes,
+    ).fetchall()
+    if not rows:
+        return None
+
+    trovati = set()
+    geni = []
+    for tipo, gene in rows:
+        low = tipo.lower()
+        if "loss of function" in low:
+            trovati.add(DiseaseMechanism.LOSS_OF_FUNCTION)
+        elif "gain of function" in low:
+            trovati.add(DiseaseMechanism.GAIN_OF_FUNCTION)
+        geni.append(gene)
+
+    if len(trovati) != 1:
+        return None
+
+    mech = next(iter(trovati))
+    verso = "perdita" if mech is DiseaseMechanism.LOSS_OF_FUNCTION else "guadagno"
+    return MechanismCall(
+        mechanism=mech,
+        rationale=(
+            f"Orphanet classifica l'associazione con {', '.join(sorted(set(geni)))} come "
+            f"mutazione germinale causa-malattia con {verso} di funzione. E' "
+            "un'annotazione della fonte, non una valutazione di questo strumento."
+        ),
+        sources=sorted({f"ORPHA:{c.split(':')[-1]}" for c in orpha_codes}),
+        origin="orphanet",
+    )
+
+
+def resolve_mechanism(
+    mondo_id: str, con=None, orpha_codes: list[str] | None = None
+) -> MechanismCall:
+    """Meccanismo della malattia: prima la curazione a mano, poi Orphanet.
+
+    L'ordine non e' arbitrario. Una voce di `config/mechanism.yaml` porta una
+    motivazione scritta e fonti scelte da chi l'ha inserita, e per le due
+    malattie che ne dispongono e' piu' informativa. Orphanet copre il resto.
+    """
+    curato = _curated_mechanism(mondo_id)
+    if curato:
+        return curato
+    if con is not None and orpha_codes:
+        derivato = orphanet_mechanism(con, orpha_codes)
+        if derivato:
+            return derivato
+    return MechanismCall(mechanism=DiseaseMechanism.UNKNOWN)
+
+
+def disease_mechanism(mondo_id: str) -> tuple[DiseaseMechanism, str | None, list[str]]:
+    """Solo la curazione a mano. Mantenuta per i chiamanti che non hanno lo store."""
+    call = _curated_mechanism(mondo_id) or MechanismCall(mechanism=DiseaseMechanism.UNKNOWN)
+    return call.mechanism, call.rationale, call.sources
 
 
 def classify_drug_action(interaction_types: list[str]) -> DrugAction:

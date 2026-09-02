@@ -292,6 +292,11 @@ class EvidenceBundle:
     disease: Disease
     mechanism: DiseaseMechanism
     mechanism_rationale: str | None = None
+    # Chi attribuisce il meccanismo: `curato` (config/mechanism.yaml, con
+    # motivazione e fonti scelte a mano), `orphanet` (derivato dal tipo di
+    # associazione dichiarato dalla fonte) o `ignoto`. Autorita' diverse, e
+    # il lettore del report deve poterle distinguere.
+    mechanism_origin: str = "ignoto"
     causal_genes: list[CausalGene]
     candidates: list[Candidate]
     generated_at: datetime
