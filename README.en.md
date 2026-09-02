@@ -247,10 +247,11 @@ No entry was written from memory: every pair was verified against Mondo, Orphane
 One figure worth isolating: **19 of 22 cases ran with no curated mechanism**, hence with the direction of effect always unknown. The ranking held up regardless. What directional curation improves is not recall but **confidence calibration**: without it, the evidence level stays pinned at `limited` even for correct, well-ranked candidates.
 
 > [!NOTE]
-> This baseline predates the derivation of disease mechanism from Orphanet, which
-> raised mechanism coverage from 3 of 22 cases to 7 and changed the configuration
-> digest. The numbers above remain valid as a snapshot of that configuration but
-> are **not comparable** with reports produced by the current version.
+> Re-run after disease mechanism began to be derived from Orphanet (digest
+> `4c2705204601`): mechanism coverage went from 3 of 22 cases to 7, and **recall did
+> not change by a single case**. What changed is the score of candidates at distance
+> zero — `cf-ivacaftor` from 0.794 to 0.969. Directional knowledge improves confidence
+> calibration, not recall. See [docs/BENCHMARK_BASELINE.md](docs/BENCHMARK_BASELINE.md).
 
 **What it measures and what it does not.** It measures coverage, not precision: an unexpected candidate is not a false positive — it might be a legitimate hypothesis nobody has studied yet. And all 22 cases are already-known repurposings, hence already studied, with abundant literature: the literature component favours them, and the measured coverage is therefore an **optimistic estimate**.
 

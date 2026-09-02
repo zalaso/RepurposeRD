@@ -22,6 +22,13 @@ Le versioni seguono [SemVer](https://semver.org/lang/it/).
   report tradotto con un validatore non tradotto sarebbe meno sicuro di nessun
   report inglese.
 
+- Baseline del banco rieseguita con l'impronta `4c2705204601`. La copertura del
+  meccanismo passa da 3 casi su 22 a 7 e **il recupero non cambia di un caso**:
+  17/21 trovati, mediana 2. Cambia il punteggio dei candidati a distanza zero
+  (`cf-ivacaftor` da 0.794 a 0.969). E' la conferma misurata di quanto
+  `LIMITATIONS.md` punto 2 sosteneva: la conoscenza direzionale migliora la
+  calibrazione della fiducia, non il recupero.
+
 ### Modificato
 
 - **L'impronta di configurazione include ora la versione del pacchetto.**
